@@ -4,7 +4,6 @@ let renderer, scene, camera, particleSystem, raycaster;
 const lines = [];
 
 function init() {
-    // Scene setup
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
     renderer = new THREE.WebGLRenderer({ 
@@ -16,7 +15,6 @@ function init() {
     renderer.setSize(window.innerWidth, window.innerHeight);
     container.appendChild(renderer.domElement);
 
-    // Particle setup
     const particlesGeometry = new THREE.BufferGeometry();
     const particleCount = 600;
     const positions = new Float32Array(particleCount * 3);
@@ -26,7 +24,6 @@ function init() {
     const radius = 2.5;
     const hemisphereGap = 0.4;
 
-    // Create particles in a spherical pattern
     for (let i = 0; i < particleCount; i++) {
         const idx = i * 3;
         const phi = Math.acos(1 - 2 * (i / particleCount));
@@ -36,11 +33,9 @@ function init() {
         let y = radius * Math.sin(phi) * Math.sin(theta);
         let z = radius * Math.cos(phi);
 
-        // Create hemisphere separation
         if (x > 0) x += hemisphereGap;
         if (x < 0) x -= hemisphereGap;
 
-        // Add subtle variation
         x += (Math.random() - 0.5) * 0.2;
         y += (Math.random() - 0.5) * 0.2;
         z += (Math.random() - 0.5) * 0.2;
@@ -49,11 +44,10 @@ function init() {
         positions[idx + 1] = y;
         positions[idx + 2] = z;
 
-        // Create blue gradient
         const intensity = Math.abs(y / radius);
-        originalColors[idx] = 0.4 + intensity * 0.3;     // R
-        originalColors[idx + 1] = 0.5 + intensity * 0.3; // G
-        originalColors[idx + 2] = 0.9 + intensity * 0.1; // B
+        originalColors[idx] = 0.4 + intensity * 0.3;
+        originalColors[idx + 1] = 0.5 + intensity * 0.3;
+        originalColors[idx + 2] = 0.9 + intensity * 0.1;
 
         colors[idx] = originalColors[idx];
         colors[idx + 1] = originalColors[idx + 1];
@@ -80,21 +74,17 @@ function init() {
     particleSystem = new THREE.Points(particlesGeometry, particlesMaterial);
     scene.add(particleSystem);
 
-    // Raycaster setup
     raycaster = new THREE.Raycaster();
     raycaster.params.Points.threshold = 0.8;
 
     camera.position.z = 8;
 
-    // Event listeners
     window.addEventListener('resize', onWindowResize, false);
     document.addEventListener('mousemove', onMouseMove, false);
 
-    // Start animation
     animate();
 }
 
-// Animation constants
 const maxDistance = 1.5;
 const attractionStrength = 0.03;
 const maxAttractionDistance = 3;
@@ -106,7 +96,6 @@ function updateParticleConnections() {
     if (now - lastConnectionUpdate < connectionUpdateInterval) return;
     lastConnectionUpdate = now;
 
-    // Clear old lines
     lines.forEach(line => scene.remove(line));
     lines.length = 0;
 
@@ -114,7 +103,6 @@ function updateParticleConnections() {
     const colors = particleSystem.geometry.attributes.color.array;
     const originalColors = particleSystem.geometry.attributes.color.array.slice();
 
-    // Reset colors
     for (let i = 0; i < colors.length; i++) {
         colors[i] = originalColors[i];
     }
@@ -139,19 +127,16 @@ function updateParticleConnections() {
             );
 
             if (distToIntersect < maxAttractionDistance) {
-                // Particle attraction
                 const force = (1 - distToIntersect / maxAttractionDistance) * attractionStrength;
                 positions[i] += (intersectPoint.x - x) * force;
                 positions[i + 1] += (intersectPoint.y - y) * force;
                 positions[i + 2] += (intersectPoint.z - z) * force;
 
-                // Color transition
                 const intensity = 1 - (distToIntersect / maxAttractionDistance);
                 colors[i] = originalColors[i] + (1 - originalColors[i]) * intensity;
                 colors[i + 1] = originalColors[i + 1] * (1 - intensity);
                 colors[i + 2] = originalColors[i + 2] * (1 - intensity);
 
-                // Create connections
                 if (connectionCount < maxConnectionsPerUpdate && distToIntersect < maxDistance) {
                     for (let j = i + 3; j < positions.length; j += 6) {
                         const x2 = positions[j];
@@ -204,5 +189,4 @@ function onWindowResize() {
     renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
-// Start the visualization
 init();
